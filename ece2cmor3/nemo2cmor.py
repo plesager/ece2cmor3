@@ -112,7 +112,7 @@ def execute(tasks):
 def lookup_variables(tasks):
     valid_tasks = []
     for task in tasks:
-        file_candidates = select_freq_files(task.target.frequency)
+        file_candidates = select_freq_files(task.target)
         results = []
         for ncfile in file_candidates:
             ds = netCDF4.Dataset(ncfile)
@@ -342,22 +342,25 @@ def create_type_axes(ds, tasks, table):
 
 
 # Selects files with data with the given frequency
-def select_freq_files(freq):
+def select_freq_files(target):
     global exp_name_, nemo_files_
-    nemo_freq = None
-    if freq == "fx":
+    freq = target.frequency
+    if freq in ["fx", "yr", "yrPt", "dec"]:
         nemo_freq = "1y"
-    elif freq == "monClim":
+    elif freq in ["mon", "monPt", "monC"]:
         nemo_freq = "1m"
-    elif freq.endswith("mon"):
-        n = 1 if freq == "mon" else int(freq[:-3])
-        nemo_freq = str(n) + "m"
-    elif freq.endswith("day"):
-        n = 1 if freq == "day" else int(freq[:-3])
-        nemo_freq = str(n) + "d"
-    elif freq.endswith("hr"):
-        n = 1 if freq == "hr" else int(freq[:-2])
-        nemo_freq = str(n) + "h"
+    elif freq in ["day", "dayPt"]:
+        nemo_freq = "1d"
+    elif freq in ["6hr", "6hrPt"]:
+        nemo_freq = "6h"
+    elif freq in ["3hr", "3hrPt"]:
+        nemo_freq = "3h"
+    elif freq in ["1hr", "1hrPt", "1hrCM"]:
+        nemo_freq = "1h"
+    else:
+        log.error("Target frequency %s for %s in table %s is not supported" %
+                  (freq, target.variable, target.table))
+        return []
     return [f for f in nemo_files_ if cmor_utils.get_nemo_frequency(f, exp_name_) == nemo_freq]
 
 
