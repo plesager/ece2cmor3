@@ -44,6 +44,11 @@ class cmor_target(object):
         self.dims = 2
 
 
+# Returns whether the target variable is decadal or climatology
+def is_multi_year(target):
+    return getattr(target, freq_key, None) in ["dec", "monC", "dayC", "1hrCM"]
+
+
 # Derives the table id for the given file path
 def get_table_id(filepath, prefix):
     fname = os.path.basename(filepath)

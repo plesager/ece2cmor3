@@ -128,7 +128,12 @@ def lookup_variables(tasks):
             log.warning("Variable %s needed for %s in table %s was found in multiple NEMO output files %s... choosing "
                         "the first match %s " % (task.source.variable(), task.target.table, task.target.variable,
                                                  task.target.table, ','.join(results)))
-        setattr(task, cmor_task.output_path_key, results[0])
+#        if task.target.frequency in ["monC"]:
+            #TODO: compute climatology
+#        elif task.target.frequency in ["dec"]:
+            #TODO: compute decadal means
+        else:
+            setattr(task, cmor_task.output_path_key, results[0])
         valid_tasks.append(task)
     return valid_tasks
 

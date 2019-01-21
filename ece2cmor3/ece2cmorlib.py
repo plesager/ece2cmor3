@@ -155,19 +155,37 @@ def add_mask(name, src, func, val):
     masks[name] = {"source": src, "operator": func, "rhs": val}
 
 
+def select_tasks(tasklist, component, climate_mode=False):
+    year_tasks = [t for t in tasklist if t.source.model_component() == component and
+                  not cmor_target.is_multi_year(t.target)]
+    clim_tasks = [t for t in tasklist if t.source.model_component() == component and
+                  cmor_target.is_multi_year(t.target)]
+    if not climate_mode:
+        selection = year_tasks
+        if any(clim_tasks):
+            log.warning("Ignoring %d multi-year %s climatology tasks" % (len(clim_tasks), component))
+    else:
+        selection = clim_tasks
+        if any(year_tasks):
+            log.warning("Ignoring %d single-year %s non-climatology tasks" % (len(year_tasks), component))
+    log.info("Selected %d %s tasks from %d input tasks" % (len(selection), component, len(tasklist)))
+    return selection
+
+
 # Performs an IFS cmorization processing:
-def perform_ifs_tasks(datadir, expname,
+def perform_ifs_tasks(datadir,
+                      expname,
                       refdate=None,
                       postprocmode=postproc.recreate,
                       tempdir="/tmp/ece2cmor",
                       taskthreads=4,
-                      cdothreads=4):
+                      cdothreads=4,
+                      climate_mode=False):
     global log, tasks, table_dir, prefix, masks
     validate_setup_settings()
     validate_run_settings(datadir, expname)
-    ifs_tasks = [t for t in tasks if t.source.model_component() == "ifs"]
-    log.info("Selected %d IFS tasks from %d input tasks" % (len(ifs_tasks), len(tasks)))
     tableroot = os.path.join(table_dir, prefix)
+    ifs_tasks = select_tasks(tasks, "ifs", climate_mode)
     if enable_masks:
         ifs2cmor.masks = {k: masks[k] for k in masks if masks[k]["source"].model_component() == "ifs"}
     else:
@@ -181,12 +199,11 @@ def perform_ifs_tasks(datadir, expname,
 
 
 # Performs a NEMO cmorization processing:
-def perform_nemo_tasks(datadir, expname, refdate):
+def perform_nemo_tasks(datadir, expname, refdate, climate_mode=False):
     global log, tasks, table_dir, prefix
     validate_setup_settings()
     validate_run_settings(datadir, expname)
-    nemo_tasks = [t for t in tasks if t.source.model_component() == "nemo"]
-    log.info("Selected %d NEMO tasks from %d input tasks" % (len(nemo_tasks), len(tasks)))
+    nemo_tasks = select_tasks(tasks, "nemo", climate_mode)
     tableroot = os.path.join(table_dir, prefix)
     if not nemo2cmor.initialize(datadir, expname, tableroot, refdate):
         return
