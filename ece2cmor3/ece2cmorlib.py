@@ -205,7 +205,7 @@ def perform_nemo_tasks(datadir, expname, refdate, climate_mode=False):
     validate_run_settings(datadir, expname)
     nemo_tasks = select_tasks(tasks, "nemo", climate_mode)
     tableroot = os.path.join(table_dir, prefix)
-    if not nemo2cmor.initialize(datadir, expname, tableroot, refdate):
+    if not nemo2cmor.initialize(datadir, expname, tableroot, refdate, climate_mode):
         return
     nemo2cmor.execute(nemo_tasks)
 

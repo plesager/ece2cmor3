@@ -3,6 +3,7 @@ import logging
 import netCDF4
 import numpy
 import os
+import re
 
 import cmor_target
 import cmor_task
@@ -48,12 +49,19 @@ lat_axes_ = {}
 
 
 # Initializes the processing loop.
-def initialize(path, expname, tableroot, refdate):
+def initialize(path, expname, tableroot, refdate, climate_mode=False):
     global log, nemo_files_, exp_name_, table_root_, ref_date_
     exp_name_ = expname
     table_root_ = tableroot
     ref_date_ = refdate
-    nemo_files_ = cmor_utils.find_nemo_output(path, expname)
+    if climate_mode:
+        nemo_files_ = []
+        expr = re.compile("^[0-9]{3}$")
+        for d in os.listdir(path):
+            if re.match(expr, d):
+                nemo_files_ += cmor_utils.find_nemo_output(os.path.join(path, d))
+    else:
+        nemo_files_ = cmor_utils.find_nemo_output(path, expname)
     cal = None
     for f in nemo_files_:
         cal = read_calendar(f)
