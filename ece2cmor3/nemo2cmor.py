@@ -47,14 +47,18 @@ type_axes_ = {}
 # Dictionary of latitude axes ids for meridional variables.
 lat_axes_ = {}
 
+# Climate (multi-year) flag
+climate_mode_ = False
+
 
 # Initializes the processing loop.
 def initialize(path, expname, tableroot, refdate, climate_mode=False):
-    global log, nemo_files_, exp_name_, table_root_, ref_date_
+    global log, nemo_files_, exp_name_, table_root_, ref_date_, climate_mode_
     exp_name_ = expname
     table_root_ = tableroot
     ref_date_ = refdate
-    if climate_mode:
+    climate_mode_ = climate_mode
+    if climate_mode_:
         nemo_files_ = []
         expr = re.compile("^[0-9]{3}$")
         for d in os.listdir(path):
