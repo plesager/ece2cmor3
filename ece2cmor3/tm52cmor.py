@@ -440,7 +440,7 @@ def execute_netcdf_task(task,tableid):
         # assumption: data is shape [time,lat,lon] (roll longitude dimensio
         vals=numpy.copy(ncvar[:])
         # zonal mean so mean over longitudes
-        vals=numpy.mean(vals,axis=-1)
+        vals=numpy.nanmean(vals,axis=-1)
         # change shape, swap lat<->lev
         vals=numpy.swapaxes(vals,1,2)
         missval = getattr(ncvar,"missing_value",getattr(ncvar,"_FillValue",numpy.nan))
@@ -556,7 +556,11 @@ def interpolate_plev(pressure_levels,dataset,psdata,varname):
     data = data[:,::-1,:,:]
 
     interpolation=1 #1 linear, 2 log, 3 loglog
-    interpolated_data = Ngl.vinth2p(data,hyam,hybm,pressure_levels,psdata[:,:,:],interpolation,p0mb,1,True)
+    mapped = Ngl.vinth2p(data,hyam,hybm,pressure_levels,psdata[:,:,:],interpolation,p0mb,1,False)
+
+    # 1e+30 are NaN in vinth2p - set them to numpy.nan before averaging
+    interpolated_data = numpy.where(mapped < 1.e29, mapped, numpy.nan)
+    
     return interpolated_data
 
 
